@@ -94,6 +94,7 @@ class Paws:
                         await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
                 
                 logger.info(f"main | Thread {self.thread} | {self.name} | круг окончен")
+                await self.session.close()
                 return 0
                 # await asyncio.sleep(random.uniform(*config.BIG_SLEEP))
             except Exception as err:
