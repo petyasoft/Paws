@@ -80,6 +80,19 @@ class Paws:
                             await self.complete_quest(quest_id=quest['_id'])
                         await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
                 
+                await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
+                await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
+                await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
+                
+                quests = await self.get_quests()
+                for quest in quests:
+                    if quest['checkRequirements'] == False:
+                        if quest['progress']['status'] == 'claimable' and quest['progress']['claimed'] == False:
+                            await self.claim_quest(quest_id=quest['_id'])
+                        elif quest['progress']['status'] == 'start':
+                            await self.complete_quest(quest_id=quest['_id'])
+                        await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
+                
                 logger.info(f"main | Thread {self.thread} | {self.name} | круг окончен")
                 return 0
                 # await asyncio.sleep(random.uniform(*config.BIG_SLEEP))
@@ -99,8 +112,6 @@ class Paws:
                 'questId': quest_id
             }
             response = await self.session.post(f'https://api.paws.community/v1/quests/completed', json=json_data)
-            if (await response.json())['success']:
-                logger.success(f"complete_quest | Thread {self.thread} | {self.name} | Claim quest | id : {quest_id}")
             return await response.json()
         except Exception as err:
             logger.error(f"complete_quest | Thread {self.thread} | {self.name} | {err}")
@@ -111,6 +122,8 @@ class Paws:
                 'questId': quest_id
             }
             response = await self.session.post(f'https://api.paws.community/v1/quests/claim', json=json_data)
+            if (await response.json())['success']:
+                logger.success(f"complete_quest | Thread {self.thread} | {self.name} | Claim quest | id : {quest_id}")
             return await response.json()
         except Exception as err:
             logger.error(f"claim_quest | Thread {self.thread} | {self.name} | {err}")
