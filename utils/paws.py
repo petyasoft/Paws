@@ -1,6 +1,8 @@
 from pyrogram.raw.functions.messages import RequestAppWebView
 from pyrogram.raw.types import InputBotAppShortName
 
+from aiocfscrape import CloudflareScraper
+
 from urllib.parse import unquote
 from utils.core import logger
 from pyrogram import Client
@@ -57,7 +59,8 @@ class Paws:
             'sec-fetch-site': 'same-site',
             'user-agent': ua}
         
-        self.session = aiohttp.ClientSession(headers=headers, trust_env=True, connector=connector)
+        self.session = CloudflareScraper(connector=connector, headers=headers)
+        # self.session = aiohttp.ClientSession(headers=headers, trust_env=True, connector=connector)
 
     async def main(self):
         await asyncio.sleep(random.uniform(*config.ACC_DELAY))
@@ -69,8 +72,7 @@ class Paws:
                     await self.session.close()
                     return 0
                 await asyncio.sleep(random.uniform(*config.MINI_SLEEP))
-            
-
+                        
                 quests = await self.get_quests()
                 for quest in quests:
                     if quest['checkRequirements'] == False:
@@ -145,7 +147,7 @@ class Paws:
             
             token = response.get("data")[0]
             self.session.headers['authorization'] = f"Bearer {token}"
-            return True
+            return response
         except Exception as err:
             logger.error(f"login | Thread {self.thread} | {self.name} | {err}")
             return False
