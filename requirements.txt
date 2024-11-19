@@ -6,3 +6,4 @@ fake-useragent==1.5.1
 requests==2.28.1
 aiohttp_socks==0.8.4
 aiocfscrape==1.0.0
+tls-client==1.0.1
