@@ -1,13 +1,13 @@
 from pyrogram.raw.functions.messages import RequestAppWebView
 from pyrogram.raw.types import InputBotAppShortName
 
-from aiocfscrape import CloudflareScraper
-
 from urllib.parse import unquote
 from utils.core import logger
 from pyrogram import Client
 from data import config
 from aiohttp_socks import ProxyConnector
+
+import tls_client
 
 import aiohttp
 import asyncio
@@ -43,8 +43,10 @@ class Paws:
         
         connector = ProxyConnector.from_url(self.proxy) if proxy else aiohttp.TCPConnector(verify_ssl=False)
         
+        self.session = tls_client.Session(client_identifier='mesh_android')
+
         ua = self.set_useragent()
-        headers = {
+        self.headers = {
             'accept': 'application/json',
             'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
             'content-type': 'application/json',
@@ -59,7 +61,7 @@ class Paws:
             'sec-fetch-site': 'same-site',
             'user-agent': ua}
         
-        self.session = CloudflareScraper(connector=connector, headers=headers)
+        # self.session = CloudflareScraper(connector=connector)
         # self.session = aiohttp.ClientSession(headers=headers, trust_env=True, connector=connector)
 
     async def main(self):
@@ -69,10 +71,14 @@ class Paws:
             try:
                 login = await self.login()
                 if not login:
-                    await self.session.close()
                     return 0
                 await asyncio.sleep(random.uniform(*config.MINI_SLEEP))
-                        
+                
+                if "wallet" not in (login['data'][1]['userData']):
+                    pass
+                else:
+                    if login['data'][1]['userData']['wallet'] == "":
+                        pass
                 quests = await self.get_quests()
                 for quest in quests:
                     if quest['checkRequirements'] == False:
@@ -96,7 +102,6 @@ class Paws:
                         await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
                 
                 logger.info(f"main | Thread {self.thread} | {self.name} | круг окончен")
-                await self.session.close()
                 return 0
                 # await asyncio.sleep(random.uniform(*config.BIG_SLEEP))
             except Exception as err:
@@ -104,8 +109,8 @@ class Paws:
                 
     async def get_quests(self):
         try:
-            response = await self.session.get(f'https://api.paws.community/v1/quests/list')
-            return (await response.json())["data"]
+            response = self.session.get(f'https://api.paws.community/v1/quests/list',proxy=self.proxy,headers=self.headers)
+            return (response.json())["data"]
         except Exception as err:
             logger.error(f"get_quests | Thread {self.thread} | {self.name} | {err}")
     
@@ -114,8 +119,8 @@ class Paws:
             json_data = {
                 'questId': quest_id
             }
-            response = await self.session.post(f'https://api.paws.community/v1/quests/completed', json=json_data)
-            return await response.json()
+            response = self.session.post(f'https://api.paws.community/v1/quests/completed', json=json_data, proxy=self.proxy,headers=self.headers)
+            return response.json()
         except Exception as err:
             logger.error(f"complete_quest | Thread {self.thread} | {self.name} | {err}")
             
@@ -124,10 +129,10 @@ class Paws:
             json_data = {
                 'questId': quest_id
             }
-            response = await self.session.post(f'https://api.paws.community/v1/quests/claim', json=json_data)
-            if (await response.json())['success']:
+            response = self.session.post(f'https://api.paws.community/v1/quests/claim', json=json_data, proxy=self.proxy,headers=self.headers)
+            if (response.json())['success']:
                 logger.success(f"complete_quest | Thread {self.thread} | {self.name} | Claim quest | id : {quest_id}")
-            return await response.json()
+            return response.json()
         except Exception as err:
             logger.error(f"claim_quest | Thread {self.thread} | {self.name} | {err}")
 
@@ -142,11 +147,11 @@ class Paws:
                 'referralCode': self.ref
             }
 
-            response = await self.session.post('https://api.paws.community/v1/user/auth', json=json_data)
-            response = await response.json()
+            response = self.session.post('https://api.paws.community/v1/user/auth', json=json_data, proxy=self.proxy,headers=self.headers)
+            response = response.json()
             
             token = response.get("data")[0]
-            self.session.headers['authorization'] = f"Bearer {token}"
+            self.headers['authorization'] = f"Bearer {token}"
             return response
         except Exception as err:
             logger.error(f"login | Thread {self.thread} | {self.name} | {err}")
@@ -170,7 +175,7 @@ class Paws:
                     logger.error(f"login | Thread {self.thread} | {self.name} | USER BANNED")
                     return False
             return unquote(string=auth_url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
-    
+
     def set_useragent(self):
         try:
             file_path = f"data/useragents.json"
