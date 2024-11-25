@@ -24,14 +24,16 @@ CHECK_PROXY = True
 # реф код - то что идет после startapp=
 REF_CODE = 'DceesgPO' # ставьте здесь свой реф код
 
+# выпишите ПОЛНЫЕ названия тасков которые не проверяются
+TASKS = ["Follow Clayton TG", "Explore Clayton App", "Connect wallet", "Join Blum Channel", "Join PAWS Cult X", "Study PAWS"]
+
 # мини задержки
 MINI_SLEEP = [2,8]
 
 # задержка между квестами
 QUEST_SLEEP = [20,40]
 
-# задержка после цикла
-BIG_SLEEP = [3*60*60,8*60*60]
+
 
 hello ='''              _                               __  _        
  _ __    ___ | |_  _   _   __ _  ___   ___   / _|| |_  ___ 
