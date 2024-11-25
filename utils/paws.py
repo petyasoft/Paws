@@ -79,9 +79,11 @@ class Paws:
                 else:
                     if login['data'][1]['userData']['wallet'] == "":
                         pass
+                        
                 quests = await self.get_quests()
+                random.shuffle(quests)
                 for quest in quests:
-                    if quest['checkRequirements'] == False:
+                    if quest['title'] in config.TASKS:
                         if quest['progress']['status'] == 'claimable' and quest['progress']['claimed'] == False:
                             await self.claim_quest(quest_id=quest['_id'])
                         elif quest['progress']['status'] == 'start':
@@ -93,8 +95,9 @@ class Paws:
                 await asyncio.sleep(random.uniform(*config.QUEST_SLEEP))
                 
                 quests = await self.get_quests()
+                random.shuffle(quests)
                 for quest in quests:
-                    if quest['checkRequirements'] == False:
+                    if quest['title'] in config.TASKS:
                         if quest['progress']['status'] == 'claimable' and quest['progress']['claimed'] == False:
                             await self.claim_quest(quest_id=quest['_id'])
                         elif quest['progress']['status'] == 'start':
